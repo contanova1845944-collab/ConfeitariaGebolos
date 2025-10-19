@@ -1,10 +1,13 @@
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import reagir from '@vitejs/plugin-react'; // 'reagir' deve ser 'react' na instalação
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react()],
-  optimizeDeps: {
-    exclude: ['lucide-react'],
+  // 💥 CORREÇÃO PRINCIPAL: Adicionando a base para o Vercel
+  base: '/', 
+  
+  plugins: [reagir()],
+  otimizarDeps: {
+    excluir: ['lúcido-reagir'],
   },
 });
