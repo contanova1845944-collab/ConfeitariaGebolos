@@ -49,3 +49,14 @@ export interface CartItem {
   quantity: number;
   image_url: string;
 }
+
+export interface ProductSales {
+  id: string;
+  product_id: string;
+  product_name: string;
+  quantity_sold: number;
+  total_revenue: number;
+  last_sale_at: string;
+  created_at: string;
+  updated_at: string;
+}
