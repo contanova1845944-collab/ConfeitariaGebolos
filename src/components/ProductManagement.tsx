@@ -197,17 +197,18 @@ export const ProductManagement: React.FC = () => {
                 <label className="block text-sm font-semibold text-amber-900 mb-2">
                   Tipo *
                 </label>
-                <select
+                <input
+                  type="text"
                   name="type"
                   value={formData.type}
                   onChange={handleInputChange}
+                  placeholder="Ex: Chocolate, Frutas, Tradicional, Gourmet..."
                   className="w-full px-4 py-2 border-2 border-amber-300 rounded-lg focus:border-rose-400 focus:outline-none"
                   required
-                >
-                  {categories.map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                </select>
+                />
+                <p className="text-xs text-amber-600 mt-1">
+                  Digite o tipo do produto (sugestões: Chocolate, Frutas, Tradicional, Gourmet, Especial)
+                </p>
               </div>
             </div>
 
