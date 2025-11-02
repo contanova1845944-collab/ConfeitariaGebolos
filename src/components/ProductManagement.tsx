@@ -283,57 +283,105 @@ export const ProductManagement: React.FC = () => {
           <p className="mt-4 text-amber-700">Carregando produtos...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.map((product) => (
-            <div
-              key={product.id}
-              className="bg-white border-2 border-amber-200 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all"
-            >
-              <div className="h-48 overflow-hidden relative">
-                <img
-                  src={product.image_url}
-                  alt={product.name}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-2 right-2 flex space-x-1">
-                  <span className="bg-amber-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-                    {product.type}
-                  </span>
-                  <span className={`text-white px-2 py-1 rounded-full text-xs font-semibold ${
-                    product.category === 'menu' ? 'bg-blue-500' : 'bg-purple-500'
-                  }`}>
-                    {product.category === 'menu' ? 'Cardápio' : 'Vitrine'}
-                  </span>
-                </div>
-              </div>
-              <div className="p-4 space-y-3">
-                <h3 className="text-lg font-serif text-amber-900">{product.name}</h3>
-                <p className="text-sm text-amber-700 line-clamp-2">{product.description}</p>
-                <div className="flex items-center justify-between pt-2">
-                  <span className="text-xl font-bold text-rose-600">
-                    R$ {product.price.toFixed(2)}
-                  </span>
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleEdit(product)}
-                      className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all"
-                      title="Editar"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(product.id)}
-                      className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all"
-                      title="Excluir"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+        <>
+          {products.filter(p => p.category === 'showcase').length > 0 && (
+            <div className="mb-8 p-4 bg-gradient-to-r from-purple-50 to-purple-100 border-2 border-purple-300 rounded-xl">
+              <h3 className="text-lg font-serif text-purple-900 mb-3 flex items-center space-x-2">
+                <span className="text-2xl">⭐</span>
+                <span>Produtos da Vitrine (Posições no Site)</span>
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {products.filter(p => p.category === 'showcase').map((product, index) => (
+                  <div key={product.id} className="bg-white border-2 border-purple-200 rounded-lg p-3">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center space-x-2">
+                        <span className="bg-gradient-to-r from-purple-600 to-pink-600 text-white w-8 h-8 flex items-center justify-center rounded-full font-bold text-sm">
+                          {index + 1}
+                        </span>
+                        <span className="text-sm font-serif text-purple-900">Posição {index + 1}</span>
+                      </div>
+                    </div>
+                    <p className="text-sm font-semibold text-purple-900 mb-1">{product.name}</p>
+                    <p className="text-xs text-purple-700 mb-2 line-clamp-2">{product.description}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-rose-600">R$ {product.price.toFixed(2)}</span>
+                      <span className="text-xs bg-purple-200 text-purple-800 px-2 py-1 rounded">{product.type}</span>
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {products.map((product) => {
+              const showcaseIndex = product.category === 'showcase'
+                ? products.filter(p => p.category === 'showcase').findIndex(p => p.id === product.id) + 1
+                : null;
+
+              return (
+                <div
+                  key={product.id}
+                  className={`bg-white border-2 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all ${
+                    product.category === 'showcase'
+                      ? 'border-purple-300 ring-2 ring-purple-200'
+                      : 'border-amber-200'
+                  }`}
+                >
+                  <div className="h-48 overflow-hidden relative">
+                    <img
+                      src={product.image_url}
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-2 left-2 right-2 flex items-center justify-between">
+                      {showcaseIndex && (
+                        <span className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-3 py-1 rounded-full text-sm font-bold shadow-lg">
+                          VITRINE #{showcaseIndex}
+                        </span>
+                      )}
+                      <div className="flex space-x-1 ml-auto">
+                        <span className="bg-amber-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                          {product.type}
+                        </span>
+                        <span className={`text-white px-2 py-1 rounded-full text-xs font-semibold ${
+                          product.category === 'menu' ? 'bg-blue-500' : 'bg-purple-500'
+                        }`}>
+                          {product.category === 'menu' ? 'Cardápio' : 'Vitrine'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-4 space-y-3">
+                    <h3 className="text-lg font-serif text-amber-900">{product.name}</h3>
+                    <p className="text-sm text-amber-700 line-clamp-2">{product.description}</p>
+                    <div className="flex items-center justify-between pt-2">
+                      <span className="text-xl font-bold text-rose-600">
+                        R$ {product.price.toFixed(2)}
+                      </span>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => handleEdit(product)}
+                          className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all"
+                          title="Editar"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(product.id)}
+                          className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all"
+                          title="Excluir"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );

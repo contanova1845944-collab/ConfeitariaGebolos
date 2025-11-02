@@ -6,30 +6,54 @@ export const OrderManagement: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [activeTab, setActiveTab] = useState<'pending' | 'accepted' | 'deleted'>('pending');
   const [loading, setLoading] = useState(false);
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOrders();
+    const interval = setInterval(fetchOrders, 5000);
+    return () => clearInterval(interval);
   }, [activeTab]);
 
   const fetchOrders = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('status', activeTab)
-      .order('created_at', { ascending: false });
-    if (data) setOrders(data);
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('status', activeTab)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching orders:', error);
+      } else if (data) {
+        setOrders(data);
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching orders:', err);
+    }
     setLoading(false);
   };
 
   const updateOrderStatus = async (orderId: string, newStatus: 'pending' | 'accepted' | 'deleted') => {
-    const { error } = await supabase
-      .from('orders')
-      .update({ status: newStatus, updated_at: new Date().toISOString() })
-      .eq('id', orderId);
+    setUpdatingOrderId(orderId);
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: newStatus, updated_at: new Date().toISOString() })
+        .eq('id', orderId);
 
-    if (!error) {
-      fetchOrders();
+      if (error) {
+        console.error('Error updating order:', error);
+        alert('Erro ao atualizar pedido. Tente novamente.');
+      } else {
+        await fetchOrders();
+        alert('Pedido atualizado com sucesso!');
+      }
+    } catch (err) {
+      console.error('Unexpected error updating order:', err);
+      alert('Erro inesperado ao atualizar pedido.');
+    } finally {
+      setUpdatingOrderId(null);
     }
   };
 
@@ -144,14 +168,28 @@ export const OrderManagement: React.FC = () => {
                   <>
                     <button
                       onClick={() => updateOrderStatus(order.id, 'accepted')}
-                      className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all shadow-md"
+                      disabled={updatingOrderId === order.id}
+                      className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all shadow-md font-semibold ${
+                        updatingOrderId === order.id
+                          ? 'bg-green-400 text-white opacity-75 cursor-wait'
+                          : 'bg-green-600 text-white hover:bg-green-700'
+                      }`}
                     >
-                      <Check className="w-4 h-4" />
-                      <span>Aceitar</span>
+                      {updatingOrderId === order.id ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Check className="w-4 h-4" />
+                      )}
+                      <span>{updatingOrderId === order.id ? 'Processando...' : 'Aceitar'}</span>
                     </button>
                     <button
                       onClick={() => updateOrderStatus(order.id, 'deleted')}
-                      className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all shadow-md"
+                      disabled={updatingOrderId === order.id}
+                      className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all shadow-md font-semibold ${
+                        updatingOrderId === order.id
+                          ? 'bg-red-400 text-white opacity-75 cursor-wait'
+                          : 'bg-red-600 text-white hover:bg-red-700'
+                      }`}
                     >
                       <X className="w-4 h-4" />
                       <span>Recusar</span>
@@ -162,10 +200,19 @@ export const OrderManagement: React.FC = () => {
                 {activeTab === 'accepted' && (
                   <button
                     onClick={() => updateOrderStatus(order.id, 'deleted')}
-                    className="flex items-center space-x-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-all shadow-md"
+                    disabled={updatingOrderId === order.id}
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all shadow-md font-semibold ${
+                      updatingOrderId === order.id
+                        ? 'bg-red-400 text-white opacity-75 cursor-wait'
+                        : 'bg-red-600 text-white hover:bg-red-700'
+                    }`}
                   >
-                    <Trash2 className="w-4 h-4" />
-                    <span>Excluir</span>
+                    {updatingOrderId === order.id ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                    <span>{updatingOrderId === order.id ? 'Processando...' : 'Excluir'}</span>
                   </button>
                 )}
 
@@ -173,24 +220,51 @@ export const OrderManagement: React.FC = () => {
                   <>
                     <button
                       onClick={() => updateOrderStatus(order.id, 'pending')}
-                      className="flex items-center space-x-2 bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700 transition-all shadow-md"
+                      disabled={updatingOrderId === order.id}
+                      className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all shadow-md font-semibold ${
+                        updatingOrderId === order.id
+                          ? 'bg-amber-400 text-white opacity-75 cursor-wait'
+                          : 'bg-amber-600 text-white hover:bg-amber-700'
+                      }`}
                     >
-                      <RotateCcw className="w-4 h-4" />
-                      <span>Restaurar para Pendente</span>
+                      {updatingOrderId === order.id ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <RotateCcw className="w-4 h-4" />
+                      )}
+                      <span>{updatingOrderId === order.id ? 'Processando...' : 'Restaurar para Pendente'}</span>
                     </button>
                     <button
                       onClick={() => updateOrderStatus(order.id, 'accepted')}
-                      className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-all shadow-md"
+                      disabled={updatingOrderId === order.id}
+                      className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all shadow-md font-semibold ${
+                        updatingOrderId === order.id
+                          ? 'bg-green-400 text-white opacity-75 cursor-wait'
+                          : 'bg-green-600 text-white hover:bg-green-700'
+                      }`}
                     >
-                      <Check className="w-4 h-4" />
-                      <span>Mover para Aceitos</span>
+                      {updatingOrderId === order.id ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Check className="w-4 h-4" />
+                      )}
+                      <span>{updatingOrderId === order.id ? 'Processando...' : 'Mover para Aceitos'}</span>
                     </button>
                     <button
                       onClick={() => deleteOrderPermanently(order.id)}
-                      className="flex items-center space-x-2 bg-red-800 text-white px-4 py-2 rounded-lg hover:bg-red-900 transition-all shadow-md"
+                      disabled={updatingOrderId === order.id}
+                      className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all shadow-md font-semibold ${
+                        updatingOrderId === order.id
+                          ? 'bg-red-700 text-white opacity-75 cursor-wait'
+                          : 'bg-red-800 text-white hover:bg-red-900'
+                      }`}
                     >
-                      <Trash2 className="w-4 h-4" />
-                      <span>Excluir Permanentemente</span>
+                      {updatingOrderId === order.id ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                      <span>{updatingOrderId === order.id ? 'Processando...' : 'Excluir Permanentemente'}</span>
                     </button>
                   </>
                 )}

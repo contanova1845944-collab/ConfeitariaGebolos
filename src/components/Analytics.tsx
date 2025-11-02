@@ -11,34 +11,47 @@ export const Analytics: React.FC = () => {
 
   useEffect(() => {
     fetchAnalytics();
+    const interval = setInterval(fetchAnalytics, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchAnalytics = async () => {
     setLoading(true);
+    try {
+      const { data: salesData, error: salesError } = await supabase
+        .from('product_sales')
+        .select('*')
+        .order('quantity_sold', { ascending: false });
 
-    const { data: salesData } = await supabase
-      .from('product_sales')
-      .select('*')
-      .order('quantity_sold', { ascending: false });
+      const { data: productsData, error: productsError } = await supabase
+        .from('products')
+        .select('*');
 
-    const { data: productsData } = await supabase
-      .from('products')
-      .select('*');
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('orders')
+        .select('total_amount, status')
+        .eq('status', 'accepted');
 
-    const { data: ordersData } = await supabase
-      .from('orders')
-      .select('total_amount, status')
-      .eq('status', 'accepted');
+      if (salesError) console.error('Error fetching sales:', salesError);
+      if (productsError) console.error('Error fetching products:', productsError);
+      if (ordersError) console.error('Error fetching orders:', ordersError);
 
-    if (salesData) setProductSales(salesData);
-    if (productsData) setProducts(productsData);
+      if (salesData) setProductSales(salesData);
+      if (productsData) setProducts(productsData);
 
-    if (ordersData) {
-      const revenue = ordersData.reduce((sum, order) => sum + order.total_amount, 0);
-      setTotalRevenue(revenue);
-      setTotalOrders(ordersData.length);
+      if (ordersData) {
+        const totalRevenue = ordersData.reduce((sum, order) => {
+          const amount = typeof order.total_amount === 'string'
+            ? parseFloat(order.total_amount)
+            : order.total_amount;
+          return sum + (isNaN(amount) ? 0 : amount);
+        }, 0);
+        setTotalRevenue(totalRevenue);
+        setTotalOrders(ordersData.length);
+      }
+    } catch (err) {
+      console.error('Unexpected error fetching analytics:', err);
     }
-
     setLoading(false);
   };
 
@@ -64,9 +77,22 @@ export const Analytics: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-serif text-amber-900">Análises e Estatísticas</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-serif text-amber-900">Análises e Estatísticas</h2>
+        <button
+          onClick={fetchAnalytics}
+          disabled={loading}
+          className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+            loading
+              ? 'bg-gray-400 text-white cursor-wait opacity-75'
+              : 'bg-gradient-to-r from-rose-500 to-amber-500 text-white hover:from-rose-600 hover:to-amber-600 shadow-md'
+          }`}
+        >
+          {loading ? 'Atualizando...' : 'Atualizar'}
+        </button>
+      </div>
 
-      {loading ? (
+      {loading && totalRevenue === 0 ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-rose-500 border-t-transparent"></div>
           <p className="mt-4 text-amber-700">Carregando análises...</p>
